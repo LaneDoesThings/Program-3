@@ -7,49 +7,53 @@
 #define MB 1000000
 
 int ReadBinaryFile(const char *filename);
-int WriteBinaryFile(const char *filename);
 bool IsText(const unsigned char *buffer, int datasize);
+bool IsTextAlt(const char *filename);
 
 unsigned char *buffer;
 size_t buffersize, datasize;
 
 int main(int argc, char *argv[]) {
   int status;
-  char *filename = "../bin/program.bin";
+  char *filename;
   bool isUnix;
 
   buffersize = 5 * MB;
   buffer = (unsigned char *)malloc(buffersize);
 
-  status = ReadBinaryFile(filename);
+    size_t i;
+  for (i = 1; i < argc; i++) {
+    filename = argv[i];
+    status = ReadBinaryFile(filename);
 
-  if (status > 0) {
-    switch (status) {
-    case 1:
-      fprintf(stderr, "Could not open file!\n");
-      break;
-    case 2:
-      fprintf(stderr, "File is zero length!\n");
-      break;
-    case 3:
-      fprintf(stderr, "File is too big for the buffer!\n");
-      break;
-    case 4:
-      fprintf(stderr, "Error reading file!\n");
-    default:
-    }
-  } else {
-    if (!IsText(buffer, datasize)) {
-      fprintf(stderr, "%s, is not a text file!\n", filename);
+    if (status > 0) {
+      switch (status) {
+      case 1:
+        fprintf(stderr, "Could not open file!\n");
+        break;
+      case 2:
+        fprintf(stderr, "File is zero length!\n");
+        break;
+      case 3:
+        fprintf(stderr, "File is too big for the buffer!\n");
+        break;
+      case 4:
+        fprintf(stderr, "Error reading file!\n");
+      default:
+      }
     } else {
-      if (strstr((char *)buffer, "\r")) {
-        isUnix = false;
+      if (!IsText(buffer, datasize)) {
+        fprintf(stderr, "%s, is not a text file!\n", filename);
       } else {
-        isUnix = true;
+        if (strstr((char *)buffer, "\r")) {
+          isUnix = false;
+        } else {
+          isUnix = true;
+        }
       }
     }
+    /*printf("%s", isUnix ? "true\n" : "false\n");*/
   }
-  printf("%s", isUnix ? "true\n" : "false\n");
   return EXIT_SUCCESS;
 }
 
@@ -88,18 +92,6 @@ int ReadBinaryFile(const char *filename) {
   return status;
 }
 
-int WriteBinaryFile(const char *filename) {
-  int status = 0;
-  FILE *ofs;
-  ofs = fopen(filename, "wb");
-  if (ofs) {
-    fwrite(buffer, 1, datasize, ofs);
-    fclose(ofs);
-    status = 1;
-  }
-  return status;
-}
-
 bool IsText(const unsigned char *buffer, int datasize) {
   size_t i, toCheck, notText = 0;
   char c;
@@ -128,3 +120,5 @@ bool IsText(const unsigned char *buffer, int datasize) {
   else
     return true;
 }
+
+bool IsTextAlt(const char *filename) { return 0; }
