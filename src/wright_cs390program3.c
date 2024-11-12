@@ -9,20 +9,29 @@
 int ReadBinaryFile(const char *filename);
 bool IsText(const unsigned char *buffer, int datasize);
 bool IsTextAlt(const char *filename);
+void ToUnix(const char *buffer, const char *filename);
 
 unsigned char *buffer;
 size_t buffersize, datasize;
 
 int main(int argc, char *argv[]) {
-  int status;
+  int status, optionIndex = -1;
   char *filename;
-  bool isUnix;
+  bool isUnix, convert = false;
 
   buffersize = 5 * MB;
   buffer = (unsigned char *)malloc(buffersize);
 
-    size_t i;
+  size_t i;
   for (i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "-u") == 0) {
+      convert = true;
+      optionIndex = i;
+    }
+  }
+  for (i = 1; i < argc; i++) {
+    if (i == optionIndex)
+      continue;
     filename = argv[i];
     status = ReadBinaryFile(filename);
 
@@ -45,8 +54,14 @@ int main(int argc, char *argv[]) {
       if (!IsText(buffer, datasize)) {
         fprintf(stderr, "%s, is not a text file!\n", filename);
       } else {
+
+        printf("%s\n", filename);
+
         if (strstr((char *)buffer, "\r")) {
           isUnix = false;
+          if (convert) {
+            ToUnix(buffer, filename);
+          }
         } else {
           isUnix = true;
         }
@@ -122,3 +137,23 @@ bool IsText(const unsigned char *buffer, int datasize) {
 }
 
 bool IsTextAlt(const char *filename) { return 0; }
+
+void ToUnix(const char *buffer, const char *filename) {
+  FILE *ofs;
+  ofs = fopen(filename, "wb");
+  if (!ofs) {
+    fprintf(stderr, "Cannot open %s for writing\n", filename);
+    return;
+  }
+
+  size_t i;
+  for (i = 0; i < buffersize; i++) {
+    if (buffer[i] == '\r') {
+      continue;
+    }
+    fputc(buffer[i], ofs);
+  }
+
+  if (ofs)
+    fclose(ofs);
+}
