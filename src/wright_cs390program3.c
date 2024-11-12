@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #define MB 1000000
 
 int ReadBinaryFile(const char *filename);
 bool IsText(const unsigned char *buffer, int datasize);
-bool IsTextAlt(const char *filename);
 void ToUnix(const char *buffer, const char *filename);
 
 unsigned char *buffer;
@@ -19,9 +19,11 @@ int main(int argc, char *argv[]) {
   char *filename;
   bool isUnix, convert = false;
 
-  buffersize = 5 * MB;
+  buffersize = 5 * MB; /*5 megabytes*/
   buffer = (unsigned char *)malloc(buffersize);
 
+  /*Loop through the input and if -u is given tell to convert and skip the input
+    with the -u*/
   size_t i;
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-u") == 0) {
@@ -29,6 +31,8 @@ int main(int argc, char *argv[]) {
       optionIndex = i;
     }
   }
+
+  /*Loop through all the given files and perform the checks/conversions*/
   for (i = 1; i < argc; i++) {
     if (i == optionIndex)
       continue;
@@ -72,6 +76,7 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 }
 
+/*Reads the file at filename and places it into buffer*/
 int ReadBinaryFile(const char *filename) {
   int status = 0;
   int bytesInFile = 0;
@@ -107,6 +112,7 @@ int ReadBinaryFile(const char *filename) {
   return status;
 }
 
+/*Checks if the buffer contains text or a binary file*/
 bool IsText(const unsigned char *buffer, int datasize) {
   size_t i, toCheck, notText = 0;
   char c;
@@ -130,14 +136,14 @@ bool IsText(const unsigned char *buffer, int datasize) {
       }
     }
   }
-  if (notText >= 50)
+  if (notText >= 50) /*If 50% or more of the checked characters aren't text the
+                        file probably isn't text*/
     return false;
   else
     return true;
 }
 
-bool IsTextAlt(const char *filename) { return 0; }
-
+/*Converts windows text file to unix and writes it back to the file system*/
 void ToUnix(const char *buffer, const char *filename) {
   FILE *ofs;
   ofs = fopen(filename, "wb");
@@ -147,7 +153,7 @@ void ToUnix(const char *buffer, const char *filename) {
   }
 
   size_t i;
-  for (i = 0; i < buffersize; i++) {
+  for (i = 0; i < datasize; i++) {
     if (buffer[i] == '\r') {
       continue;
     }
